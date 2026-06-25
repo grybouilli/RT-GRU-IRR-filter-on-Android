@@ -23,10 +23,10 @@ class OrtGRUInference final : public ModelInferenceMethodBase<IIRGRU> {
         m_x_data{m_memory_info,
                  {gru.batch_size(), gru.buffer_size(), gru.input_size()}},
         m_hidden{
-            {OrtTensorBuffer(
+            {OrtTensorBuffer<float, 3>(
                  m_memory_info,
                  {gru.num_layers(), gru.batch_size(), gru.hidden_size()}),
-             OrtTensorBuffer(
+             OrtTensorBuffer<float, 3>(
                  m_memory_info,
                  {gru.num_layers(), gru.batch_size(), gru.hidden_size()})}},
         m_output{m_memory_info, {gru.batch_size(), gru.buffer_size(), 1}} {
@@ -92,8 +92,8 @@ class OrtGRUInference final : public ModelInferenceMethodBase<IIRGRU> {
     Ort::MemoryInfo m_memory_info;
     Ort::IoBinding  m_binding;
 
-    size_t                         m_hidden_ping;
-    OrtTensorBuffer                m_x_data;
-    std::array<OrtTensorBuffer, 2> m_hidden;
-    OrtTensorBuffer                m_output;
+    size_t                                   m_hidden_ping;
+    OrtTensorBuffer<float, 3>                m_x_data;
+    std::array<OrtTensorBuffer<float, 3>, 2> m_hidden;
+    OrtTensorBuffer<float, 3>                m_output;
 };
