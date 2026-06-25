@@ -11,4 +11,5 @@ struct GeneralInferenceParams {
     bool                      profiling;
     std::string               profiling_file;
     size_t                    warm_up_buffers;
+    int64_t                   dsp_sample_rate;
 };

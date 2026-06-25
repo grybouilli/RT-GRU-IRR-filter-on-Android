@@ -5,9 +5,9 @@ if(ONNX_USE_QNN)
     set(ONXX_RT_URL      "https://repo1.maven.org/maven2/com/microsoft/onnxruntime/onnxruntime-android-qnn/${LIBONNXRUNTIME_VERSION}/onnxruntime-android-qnn-${LIBONNXRUNTIME_VERSION}.aar")
     set(ONXX_RT_SHA256   "22c9ec9a6d86436fd0e4299dc2ee56e2a89b7285b4d5bde68a888fd6d695f60f") 
 
-    set(QNN_API_URL "https://apigwx-aws.qualcomm.com/qsc/public/v1/api/download/software/sdks/Qualcomm_AI_Runtime_Community/All/2.45.0.260326/v2.45.0.260326.zip")
+    set(QNN_API_URL "https://apigwx-aws.qualcomm.com/qsc/public/v1/api/download/software/sdks/Qualcomm_AI_Runtime_Community/All/2.42.0.251225/v2.42.0.251225.zip")
     set(QNN_API_DL_DIR ${CMAKE_BINARY_DIR}/import)
-    set(QNN_API_ZIP_PATH ${QNN_API_DL_DIR}/qnn_api_v2.45.0.zip)
+    set(QNN_API_ZIP_PATH ${QNN_API_DL_DIR}/qnn_api_v2.42.0.zip)
 else()
     set(ONXX_RT_URL      "https://repo1.maven.org/maven2/com/microsoft/onnxruntime/onnxruntime-android/${LIBONNXRUNTIME_VERSION}/onnxruntime-android-${LIBONNXRUNTIME_VERSION}.aar")
     set(ONXX_RT_SHA256   "bc461499a735653dff285a6a3477d28b9cfd119a09c7753eaf003426b577f223") 
@@ -54,7 +54,7 @@ message(STATUS "Ort include dir    : ${ONXX_RT_SRC_DIR}/headers")
 
 # Download QNN API if needed
 
-if(QNN_API_URL)
+if(QNN_API_URL AND NOT EXISTS ${QNN_API_ZIP_PATH})
     file(DOWNLOAD ${QNN_API_URL} ${QNN_API_ZIP_PATH} STATUS QNN_API_DOWNLOAD_STATUS SHOW_PROGRESS)
     execute_process(
             COMMAND unzip ${QNN_API_ZIP_PATH} 
