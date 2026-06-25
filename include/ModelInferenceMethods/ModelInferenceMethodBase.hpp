@@ -1,6 +1,6 @@
 #pragma once
 
-#include <IIRGRUInfo.hpp>
+#include <ModelInferenceMethods/GRUInferenceMethods/IIRGRUInfo.hpp>
 #include <ModelInferenceMethods/GeneralInferenceParams.hpp>
 #include <ModelInferenceMethods/IEParams.hpp>
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <type_traits>
 
 template <int64_t BatchSize,
           int64_t BufferSize,

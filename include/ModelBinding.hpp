@@ -1,7 +1,7 @@
 #pragma once
 
-#include <IIRGRUInfo.hpp>
 #include <ModelInferenceMethods/GRUInferenceMethods/Anira/AniraGRUInference.hpp>
+#include <ModelInferenceMethods/GRUInferenceMethods/IIRGRUInfo.hpp>
 #include <ModelInferenceMethods/GRUInferenceMethods/Ort/OrtGRUInference.hpp>
 #include <ModelInferenceMethods/GeneralInferenceParams.hpp>
 #include <ModelInferenceMethods/IEParams.hpp>
