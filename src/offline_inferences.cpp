@@ -20,24 +20,33 @@ int main(int argc, char** argv) {
 
     fill_gparams_from_args(gparams, args);
     fill_ie_params_from_args(ort_params, args["options"].as<std::string>());
+    std::cout << "DSP sample rate = " << gparams.dsp_sample_rate << std::endl;
 
     OrtConvTasNetInference interface{model, gparams, ort_params};
 
     std::cout << "Opening file " << args["file"].as<std::string>() << std::endl;
     // read audio file
-    SF_INFO  info{};
+    SF_INFO info_in{};
+    info_in.format = 0;
     SNDFILE* in =
-        sf_open(args["file"].as<std::string>().c_str(), SFM_READ, &info);
-    SNDFILE* out = sf_open("output.flac", SFM_WRITE, &info);
+        sf_open(args["file"].as<std::string>().c_str(), SFM_READ, &info_in);
+    SF_INFO info_out{};
+    info_out.samplerate = gparams.dsp_sample_rate;
+    info_out.channels   = 1;
+    info_out.format     = (SF_FORMAT_WAV | SF_FORMAT_FLOAT);
+    SNDFILE* out        = sf_open("output.wav", SFM_WRITE, &info_out);
 
-    const int          BLOCK = 256;
+    constexpr int      BLOCK = 252;
     std::vector<float> buf(BLOCK);
     sf_count_t         n;
     // inference buffer by buffer
     std::cout << "Starting inferences..." << std::endl;
 
     std::vector<float> latencies;
+    int                frame_counter = 0;
     while ((n = sf_read_float(in, buf.data(), BLOCK)) > 0) {
+        frame_counter++;
+        std::cout << "=== Frame " << frame_counter << " ===" << std::endl;
         auto beg = std::chrono::high_resolution_clock::now();
         interface.run(buf.data(), BLOCK);
         auto end = std::chrono::high_resolution_clock::now();
@@ -45,6 +54,7 @@ int main(int argc, char** argv) {
         latencies.push_back(
             std::chrono::duration_cast<std::chrono::milliseconds>(end - beg)
                 .count());
+        std::cout << "Writing " << n << " samples to output.wav" << std::endl;
         sf_write_float(out, buf.data(), n);
     }
 

@@ -47,9 +47,9 @@ auto get_options() {
         "w,warm_up_buffers",
         "Amount of warm-up buffers (unsigned int)",
         cxxopts::value<size_t>()->default_value("0"))(
-        "s,sample_rate",
+        "s,dsp_sample_rate",
         "DSP sample rate (unsigned int)",
-        cxxopts::value<size_t>()->default_value("48000"));
+        cxxopts::value<int64_t>()->default_value("48000"));
 
     return options;
 }

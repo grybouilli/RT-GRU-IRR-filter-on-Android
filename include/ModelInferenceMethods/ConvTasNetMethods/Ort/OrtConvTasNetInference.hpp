@@ -46,17 +46,16 @@ class OrtConvTasNetInference final
         const size_t        expected_ds_size =
             (int)(m_downsampler.get_ratio() * samples);
 
-        // TODO : we may need to downsample first - using libresample library
         std::shift_left(m_x_data.buffer_memory.begin(),
                         m_x_data.buffer_memory.end(),
                         expected_ds_size);  // discard the oldest buffer
 
-        m_downsampler.resample(audio,
-                               num_samples,
-                               m_x_data.buffer_memory.data() +
-                                   m_x_data.buffer_memory.size() -
-                                   expected_ds_size,
-                               expected_ds_size);
+        auto ds_frames = m_downsampler.resample(
+            audio,
+            num_samples,
+            m_x_data.buffer_memory.data() + m_x_data.buffer_memory.size() -
+                expected_ds_size,
+            expected_ds_size);
 
         m_binding.ClearBoundInputs();
         m_binding.BindInput("input", m_x_data.tensor);
@@ -66,21 +65,40 @@ class OrtConvTasNetInference final
 
         m_session_handler.session().Run(Ort::RunOptions{nullptr}, m_binding);
 
-        const auto         offset = m_output.buffer_memory.size() - samples;
-        std::vector<float> upsampled_voices(samples * 2, 0.f);
-        m_upsampler.resample(m_output.buffer_memory.data() + offset,
-                             expected_ds_size,
-                             upsampled_voices.data(),
-                             samples);
-        for (auto sample = 0; sample < samples; ++sample) {
-            *(audio + sample) =
-                upsampled_voices[2 * sample + m_selected_out_channel];
+        const auto offset = (m_selected_out_channel + 1) * B - expected_ds_size;
+        std::vector<float> upsampled_voices(samples);
+        auto               gen_frames =
+            m_upsampler.resample(m_output.buffer_memory.data() + offset,
+                                 expected_ds_size,
+                                 upsampled_voices.data(),
+                                 upsampled_voices.size());
+        std::cout << "expected ds size: " << expected_ds_size << std::endl;
+        std::cout << "downsampled frames: " << ds_frames << std::endl;
+        std::cout << "offset: " << offset << std::endl;
+        std::cout << "upsampled frames: " << gen_frames << std::endl;
+        std::cout << "upsampled voices: " << upsampled_voices.size()
+                  << std::endl;
+
+        const auto upsampled_frames = std::min((int)samples, gen_frames);
+
+        std::memset(
+            audio,
+            0,
+            samples *
+                sizeof(float));  // DEBUG : check if output is not just input
+        for (auto sample = 0; sample < upsampled_frames; ++sample) {
+            *(audio + sample) = upsampled_voices[sample];
         }
-        return true;
+        return true;  // TODO: return the amount of treated samples
     }
 
+    /**
+     * @brief Select which output channel to output when using run
+     *
+     * @param channel an integer that is either 0 or 1
+     */
     void select_output_channel(const size_t channel) {
-        m_selected_out_channel = channel;
+        m_selected_out_channel = channel % 2;
     }
 
    private:

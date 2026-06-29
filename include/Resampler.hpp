@@ -26,7 +26,7 @@ class Resampler {
         data.data_out      = output.data();
         data.output_frames = NO;
         data.src_ratio     = m_ratio;
-        data.end_of_input  = data.input_frames == src.size() ? 1 : 0;
+        data.end_of_input  = 0;
 
         auto res = src_process(m_resampler, &data);
         if (res != 0) return res;
@@ -43,7 +43,7 @@ class Resampler {
         data.data_out      = output;
         data.output_frames = out_samples;
         data.src_ratio     = m_ratio;
-        data.end_of_input  = 1;
+        data.end_of_input  = 0;
 
         auto res = src_process(m_resampler, &data);
         if (res != 0) return res;
