@@ -29,8 +29,8 @@ class IOStreamHandler {
         }
     }
 
-    const int32_t& get_in_sr() const { return m_in_sr; }
-    const int32_t& get_out_sr() const { return m_out_sr; }
+    const int32_t get_in_sr() const { return m_in_builder.getSampleRate(); }
+    const int32_t get_out_sr() const { return m_out_builder.getSampleRate(); }
 
     bool create_streams(const int32_t input_buffer_size,
                         const int32_t output_buffer_size) {

@@ -15,7 +15,8 @@ class OrtGRUInference final : public ModelInferenceMethodBase<IIRGRU> {
         m_session_handler{gparams.model_filename,
                           ieparams.EP_name,
                           gparams.debug_mode_on,
-                          ieparams.EP_options},
+                          ieparams.EP_options,
+                          ieparams.config_entries},
         m_fc_normed{gparams.Fc_normed},
         m_memory_info{
             Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault)},

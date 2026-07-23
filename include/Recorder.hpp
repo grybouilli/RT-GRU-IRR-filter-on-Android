@@ -20,8 +20,8 @@
 // ---------------------------------------------------------------------------
 class Recorder : public oboe::AudioStreamDataCallback {
    public:
-    Recorder(int32_t sample_rate, int32_t channels, audio_buffer& buffer) :
-        m_sample_rate{sample_rate}, m_channels{channels}, m_buffer{buffer} {}
+    Recorder(int32_t channels, audio_buffer& buffer) :
+        m_channels{channels}, m_buffer{buffer} {}
 
     oboe::DataCallbackResult onAudioReady(oboe::AudioStream* /*stream*/,
                                           void*   audio_data,
@@ -45,7 +45,6 @@ class Recorder : public oboe::AudioStreamDataCallback {
     }
 
    private:
-    int32_t       m_sample_rate;
     int32_t       m_channels;
     audio_buffer& m_buffer;
 

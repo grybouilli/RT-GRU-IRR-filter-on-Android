@@ -24,14 +24,8 @@ class Player : public oboe::AudioStreamDataCallback {
     bool debug;
 
    public:
-    Player(int32_t       sample_rate,
-           int32_t       channels,
-           audio_buffer& buffer,
-           const bool    dbg = false) :
-        m_sample_rate{sample_rate},
-        m_channels{channels},
-        m_buffer{buffer},
-        debug{dbg} {}
+    Player(int32_t channels, audio_buffer& buffer, const bool dbg = false) :
+        m_channels{channels}, m_buffer{buffer}, debug{dbg} {}
 
     oboe::DataCallbackResult onAudioReady(oboe::AudioStream* /*stream*/,
                                           void*   audio_data,
@@ -60,7 +54,6 @@ class Player : public oboe::AudioStreamDataCallback {
     }
 
    private:
-    int32_t       m_sample_rate;
     int32_t       m_channels;
     audio_buffer& m_buffer;
 

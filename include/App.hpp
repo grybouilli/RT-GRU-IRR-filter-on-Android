@@ -5,9 +5,9 @@
 
 #include <AudioParams.hpp>
 #include <DSPRunner.hpp>
-#include <IIRGRUInfo.hpp>
-#include <IIRGRUUtils.hpp>
 #include <IOStreamHandler.hpp>
+#include <ModelInferenceMethods/GRUInferenceMethods/IIRGRUInfo.hpp>
+#include <ModelInferenceMethods/GRUInferenceMethods/IIRGRUUtils.hpp>
 #include <ModelInferenceMethods/GeneralInferenceParams.hpp>
 #include <ModelInferenceMethods/IEParams.hpp>
 #include <Player.hpp>
@@ -34,9 +34,9 @@ class App {
               model,
               gparams,
               ieparams},
-        m_recorder{m_stream_handler.get_in_sr(), 1, m_input_audio_buffer},
+        m_recorder{1, m_input_audio_buffer},
         m_model{model},
-        m_player{m_stream_handler.get_out_sr(), 1, m_output_audio_buffer},
+        m_player{1, m_output_audio_buffer},
         m_run_duration{-1} {
         parse_options(args);
 
@@ -53,11 +53,11 @@ class App {
         constexpr int32_t dsp_input_audio_buffer_size  = 256;
         constexpr int32_t dsp_output_audio_buffer_size = 256;
         m_stream_handler.m_in_builder.setDataCallback(&m_recorder)
-            ->setSampleRate(m_stream_handler.get_in_sr())
+            ->setSampleRate(gparams.dsp_sample_rate)
             ->setFramesPerCallback(dsp_input_audio_buffer_size);
 
         m_stream_handler.m_out_builder.setDataCallback(&m_player)
-            ->setSampleRate(m_stream_handler.get_out_sr())
+            ->setSampleRate(gparams.dsp_sample_rate)
             ->setFramesPerCallback(dsp_output_audio_buffer_size);
 
         m_stream_handler.create_streams(dsp_input_audio_buffer_size,
