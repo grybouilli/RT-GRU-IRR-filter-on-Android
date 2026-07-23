@@ -3,15 +3,15 @@
 #include <cstdint>
 #include <type_traits>
 
-template <int64_t BatchSize,
-          int64_t BufferSize,
-          int64_t OutputChannels,
-          int64_t SampleRate>
+template <int8_t  BatchSize,
+          int16_t BufferSize,
+          int8_t  OutputChannels,
+          int     SampleRate>
 struct ConvTasNetInfo {
-    static constexpr int64_t batch_size() { return BatchSize; }
-    static constexpr int64_t buffer_size() { return BufferSize; }
-    static constexpr int64_t output_channels() { return OutputChannels; }
-    static constexpr int64_t sample_rate() { return SampleRate; }
+    static constexpr int8_t  batch_size() { return BatchSize; }
+    static constexpr int16_t buffer_size() { return BufferSize; }
+    static constexpr int8_t  output_channels() { return OutputChannels; }
+    static constexpr int     sample_rate() { return SampleRate; }
 };
 
 template <typename T>

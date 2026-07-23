@@ -18,8 +18,10 @@ auto get_options() {
         cxxopts::value<std::string>()->default_value("./lowpass_rnn.onnx"))(
         "t,model_type",
         "Type of the loaded model (supported : GRU)",
-        cxxopts::value<std::string>()->default_value(
-            "GRU"))("f,fc", "Cutoff frequency (Hz)", cxxopts::value<int32_t>())(
+        cxxopts::value<std::string>()->default_value("GRU"))(
+        "f,fc",
+        "Cutoff frequency (Hz)",
+        cxxopts::value<int32_t>()->default_value("150"))(
         "p,profiling",
         "Profiling mode : get information about session perfomance (boolean)",
         cxxopts::value<bool>()->default_value("false"))(
@@ -40,7 +42,8 @@ auto get_options() {
         cxxopts::value<std::string>()->default_value("Ort"))(
         "o,options",
         "Inference Engine options (json string) : \n"
-        "Ort -> {\"EP_name\": string, \"EP_options\" : null|dict }\n"
+        "Ort -> {\"EP_name\": string, \"EP_options\" : null|dict, "
+        "\"config_entries\": null|dict }\n"
         "Anira -> {\"backend\": ONNX, \"model_latency\": float }\n",
         cxxopts::value<std::string>()->default_value(
             R"({"EP_name": "XNNPACK" })"))(
@@ -49,7 +52,18 @@ auto get_options() {
         cxxopts::value<size_t>()->default_value("0"))(
         "s,dsp_sample_rate",
         "DSP sample rate (unsigned int)",
-        cxxopts::value<int64_t>()->default_value("48000"));
+        cxxopts::value<int64_t>()->default_value("48000"))(
+        "b,buffer_size",
+        "Buffer size (unsigned int)",
+        cxxopts::value<int>()->default_value("252"))(
+        "ort_json_ep_options",
+        "Ort specific: filename of json file containing EP options "
+        "(std::string)",
+        cxxopts::value<std::string>()->default_value(""))(
+        "ort_json_config_entries",
+        "Ort specific: filename of json file containing Ort config entries "
+        "(std::string)",
+        cxxopts::value<std::string>()->default_value(""));
 
     return options;
 }

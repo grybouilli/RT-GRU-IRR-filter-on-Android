@@ -1,4 +1,5 @@
 #include <sndfile.h>
+#define OFFLINE_INFERENCES 1
 
 #include <ModelInferenceMethods/ConvTasNetMethods/ConvTasNetInfo.hpp>
 #include <ModelInferenceMethods/ConvTasNetMethods/Ort/OrtConvTasNetInference.hpp>
@@ -6,11 +7,14 @@
 #include <npy.hpp>
 #include <parsing_utils.hpp>
 
+#ifndef INPUT_SAMPLE_COUNT
+#define INPUT_SAMPLE_COUNT 16000
+#endif
+
 int main(int argc, char** argv) {
-    std::cout << "Verbose version" << std::endl;
-    GeneralInferenceParams            gparams;
-    OrtParams                         ort_params;
-    ConvTasNetInfo<1, 24000, 2, 8000> model;
+    GeneralInferenceParams                         gparams;
+    OrtParams                                      ort_params;
+    ConvTasNetInfo<1, INPUT_SAMPLE_COUNT, 2, 8000> model;
 
     auto options = get_options();
     options.add_options()("file",
@@ -34,9 +38,12 @@ int main(int argc, char** argv) {
     info_out.samplerate = gparams.dsp_sample_rate;
     info_out.channels   = 1;
     info_out.format     = (SF_FORMAT_WAV | SF_FORMAT_FLOAT);
-    SNDFILE* out        = sf_open("output.wav", SFM_WRITE, &info_out);
 
-    constexpr int      BLOCK = 252;
+    const std::string outfilename =
+        std::format("{}_output.wav", gparams.model_filename);
+    SNDFILE* out = sf_open(outfilename.c_str(), SFM_WRITE, &info_out);
+
+    const int          BLOCK = args["buffer_size"].as<int>();
     std::vector<float> buf(BLOCK);
     sf_count_t         n;
     // inference buffer by buffer
@@ -54,7 +61,8 @@ int main(int argc, char** argv) {
         latencies.push_back(
             std::chrono::duration_cast<std::chrono::milliseconds>(end - beg)
                 .count());
-        std::cout << "Writing " << n << " samples to output.wav" << std::endl;
+        std::cout << "Writing " << n << " samples to " << outfilename
+                  << std::endl;
         sf_write_float(out, buf.data(), n);
     }
 

@@ -6,8 +6,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color=always")
 set(SOURCE_FILES src/main.cpp src/acquire_audio_stream.cpp)
 set(GET_OPT_MODEL_SRC_FILES src/get_optimized_model.cpp)
 set(OFFLINE_INFERENCE_SRC_FILES src/offline_inferences.cpp)
+
 set(GET_OPT_MODEL_BIN get_opt_model)
-set(OFFLINE_INFERENCE offline_inference)
+set(OFFLINE_INFERENCE_3SEC offline_inference_3sec)
+set(OFFLINE_INFERENCE_2SEC offline_inference_2sec)
 
 option(ONNX_USE_QNN "Will fetch a version of Onnx Runtime that only supports QNN and CPU" OFF)
 option(APP_AS_APK "Will build app as a complete Android APK app" OFF)
@@ -28,7 +30,12 @@ include(cmake/FetchLibsamplerate.cmake)
 
 if(NOT APP_AS_APK)
     add_executable(${PROJECT_NAME} ${SOURCE_FILES})
-    add_executable(${OFFLINE_INFERENCE} ${OFFLINE_INFERENCE_SRC_FILES})
+    add_executable(${GET_OPT_MODEL_BIN} ${GET_OPT_MODEL_SRC_FILES})
+    add_executable(${OFFLINE_INFERENCE_3SEC} ${OFFLINE_INFERENCE_SRC_FILES})
+    add_executable(${OFFLINE_INFERENCE_2SEC} ${OFFLINE_INFERENCE_SRC_FILES})
+
+    target_compile_definitions(${OFFLINE_INFERENCE_3SEC} PRIVATE INPUT_SAMPLE_COUNT=24000)
+    target_compile_definitions(${OFFLINE_INFERENCE_2SEC} PRIVATE INPUT_SAMPLE_COUNT=16000)
 else()
     add_compile_definitions(APP_AS_APK)
     add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
@@ -54,14 +61,14 @@ target_link_libraries(
 target_link_options(${PROJECT_NAME} PRIVATE -Wl,--allow-shlib-undefined)
 
 target_include_directories(
-    ${OFFLINE_INFERENCE}
+    ${GET_OPT_MODEL_BIN}
     PRIVATE ${ONXX_RT_SRC_DIR}/headers
     PRIVATE ${CMAKE_SOURCE_DIR}/include
     PRIVATE ${CMAKE_BINARY_DIR}/_deps/onnxruntime-src/headers
 )
 
 target_link_libraries(
-    ${OFFLINE_INFERENCE}
+    ${GET_OPT_MODEL_BIN}
     PRIVATE log
     PRIVATE cxxopts::cxxopts
     PRIVATE magic_enum::magic_enum
@@ -72,4 +79,47 @@ target_link_libraries(
     PRIVATE sndfile 
     PRIVATE fftw3
 )
-target_link_options(${OFFLINE_INFERENCE} PRIVATE -Wl,--allow-shlib-undefined)
+target_link_options(${GET_OPT_MODEL_BIN} PRIVATE -Wl,--allow-shlib-undefined)
+
+target_include_directories(
+    ${OFFLINE_INFERENCE_3SEC}
+    PRIVATE ${ONXX_RT_SRC_DIR}/headers
+    PRIVATE ${CMAKE_SOURCE_DIR}/include
+    PRIVATE ${CMAKE_BINARY_DIR}/_deps/onnxruntime-src/headers
+)
+
+target_link_libraries(
+    ${OFFLINE_INFERENCE_3SEC}
+    PRIVATE log
+    PRIVATE cxxopts::cxxopts
+    PRIVATE magic_enum::magic_enum
+    PRIVATE nlohmann_json::nlohmann_json
+    PRIVATE Boost::pfr
+    PRIVATE ${CMAKE_SOURCE_DIR}/modules/libonnxruntime.so
+    PRIVATE SampleRate::samplerate
+    PRIVATE sndfile 
+    PRIVATE fftw3
+)
+target_link_options(${OFFLINE_INFERENCE_3SEC} PRIVATE -Wl,--allow-shlib-undefined)
+
+target_include_directories(
+    ${OFFLINE_INFERENCE_2SEC}
+    PRIVATE ${ONXX_RT_SRC_DIR}/headers
+    PRIVATE ${CMAKE_SOURCE_DIR}/include
+    PRIVATE ${CMAKE_BINARY_DIR}/_deps/onnxruntime-src/headers
+)
+
+target_link_libraries(
+    ${OFFLINE_INFERENCE_2SEC}
+    PRIVATE log
+    PRIVATE cxxopts::cxxopts
+    PRIVATE magic_enum::magic_enum
+    PRIVATE nlohmann_json::nlohmann_json
+    PRIVATE Boost::pfr
+    PRIVATE ${CMAKE_SOURCE_DIR}/modules/libonnxruntime.so
+    PRIVATE SampleRate::samplerate
+    PRIVATE sndfile 
+    PRIVATE fftw3
+)
+target_link_options(${OFFLINE_INFERENCE_2SEC} PRIVATE -Wl,--allow-shlib-undefined)
+

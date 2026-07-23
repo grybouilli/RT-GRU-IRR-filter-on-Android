@@ -19,7 +19,7 @@ FetchContent_Declare(
     ${ONXX_RT_NAME}
     URL        ${ONXX_RT_URL}
     DOWNLOAD_NAME   "onnxruntime-android.zip"
-    URL_HASH   SHA256=${ONXX_RT_SHA256}
+    # URL_HASH   SHA256=${ONXX_RT_SHA256}
     DOWNLOAD_NO_EXTRACT FALSE            # Ensure the archive is extracted
     DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )

@@ -7,6 +7,7 @@
 #include <ModelInferenceMethods/OrtUtils/OrtSessionHandler.hpp>
 #include <ModelInferenceMethods/OrtUtils/OrtTensorBuffer.hpp>
 #include <Resampler.hpp>
+#include <SoundFileWriter.hpp>
 #include <array>
 
 template <IsConvTasNetInfo ConvTasNet>
@@ -21,7 +22,7 @@ class OrtConvTasNetInference final
                           ieparams.EP_name,
                           gparams.debug_mode_on,
                           ieparams.EP_options,
-                          ieparams.optimized_model},
+                          ieparams.config_entries},
         m_memory_info{
             Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault)},
         m_binding{m_session_handler.session()},
@@ -34,10 +35,25 @@ class OrtConvTasNetInference final
         m_downsampler{(double)convtasnet.sample_rate() /
                       gparams.dsp_sample_rate},
         m_upsampler{(double)gparams.dsp_sample_rate / convtasnet.sample_rate()},
-        m_selected_out_channel{0} {
-        const auto Ba = convtasnet.batch_size();
-        const auto Bu = convtasnet.buffer_size();
-        const auto O  = convtasnet.output_channels();
+        m_selected_out_channel{0}
+#ifdef OFFLINE_INFERENCES
+        ,
+        m_filtered_outfile_chan0{
+            std::format("{}_filtered_output_chan0_from_{}_to_{}khz.wav",
+                        gparams.model_filename,
+                        gparams.dsp_sample_rate,
+                        convtasnet.sample_rate()),
+            convtasnet.sample_rate(),
+            1},
+        m_filtered_outfile_chan1{
+            std::format("{}_filtered_output_chan1_from_{}_to_{}khz.wav",
+                        gparams.model_filename,
+                        gparams.dsp_sample_rate,
+                        convtasnet.sample_rate()),
+            convtasnet.sample_rate(),
+            1}
+#endif
+    {
     }
 
     bool run(float* audio, const size_t num_samples) override {
@@ -50,13 +66,13 @@ class OrtConvTasNetInference final
                         m_x_data.buffer_memory.end(),
                         expected_ds_size);  // discard the oldest buffer
 
-        auto ds_frames = m_downsampler.resample(
-            audio,
-            num_samples,
-            m_x_data.buffer_memory.data() + m_x_data.buffer_memory.size() -
-                expected_ds_size,
-            expected_ds_size);
-
+        float* latest_input_buffer = m_x_data.buffer_memory.data() +
+                                     m_x_data.buffer_memory.size() -
+                                     expected_ds_size;
+        auto   ds_frames           = m_downsampler.resample(audio,
+                                                            num_samples,
+                                                            latest_input_buffer,
+                                                            expected_ds_size);
         m_binding.ClearBoundInputs();
         m_binding.BindInput("input", m_x_data.tensor);
 
@@ -65,19 +81,21 @@ class OrtConvTasNetInference final
 
         m_session_handler.session().Run(Ort::RunOptions{nullptr}, m_binding);
 
-        const auto offset = (m_selected_out_channel + 1) * B - expected_ds_size;
+        const auto offset = (m_selected_out_channel + 1) * B - ds_frames;
+#ifdef OFFLINE_INFERENCES
+        m_filtered_outfile_chan0.write(m_output.buffer_memory.data() + offset,
+                                       ds_frames);
+        const auto offset2 =
+            (((m_selected_out_channel + 1) % 2) + 1) * B - ds_frames;
+        m_filtered_outfile_chan1.write(m_output.buffer_memory.data() + offset2,
+                                       ds_frames);
+#endif  // OFFLINE_INFERENCES
         std::vector<float> upsampled_voices(samples);
         auto               gen_frames =
             m_upsampler.resample(m_output.buffer_memory.data() + offset,
-                                 expected_ds_size,
+                                 ds_frames,
                                  upsampled_voices.data(),
                                  upsampled_voices.size());
-        std::cout << "expected ds size: " << expected_ds_size << std::endl;
-        std::cout << "downsampled frames: " << ds_frames << std::endl;
-        std::cout << "offset: " << offset << std::endl;
-        std::cout << "upsampled frames: " << gen_frames << std::endl;
-        std::cout << "upsampled voices: " << upsampled_voices.size()
-                  << std::endl;
 
         const auto upsampled_frames = std::min((int)samples, gen_frames);
 
@@ -114,4 +132,8 @@ class OrtConvTasNetInference final
     Resampler<2> m_upsampler;
 
     size_t m_selected_out_channel;
+#ifdef OFFLINE_INFERENCES
+    SoundFileWriter<float, SF_FORMAT_WAV> m_filtered_outfile_chan0;
+    SoundFileWriter<float, SF_FORMAT_WAV> m_filtered_outfile_chan1;
+#endif
 };

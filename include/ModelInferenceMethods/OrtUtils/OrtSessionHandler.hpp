@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cpu_provider_factory.h>
+// #include <cpu_provider_factory.h>
 #include <onnxruntime_cxx_api.h>
 
 #include <iostream>
@@ -8,6 +8,8 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+#include "onnxruntime_session_options_config_keys.h"
 
 enum class SupportedEPs {
     CPUExecutionProvider,
@@ -23,9 +25,10 @@ class OrtSessionHandler {
         const std::string                                   model_filename,
         const std::string                                   ep_name,
         const bool                                          debug      = false,
-        const std::unordered_map<std::string, std::string>& ep_options = {}) :
-        m_env(debug ? ORT_LOGGING_LEVEL_VERBOSE : ORT_LOGGING_LEVEL_FATAL,
-              "lowpass_rnn\n") {
+        const std::unordered_map<std::string, std::string>& ep_options = {},
+        const std::unordered_map<std::string, std::string>& config_entries =
+            {}) :
+        m_env(ORT_LOGGING_LEVEL_VERBOSE, "lowpass_rnn\n") {
         // Lists all providers compiled into your ORT build
         std::vector<std::string> providers = Ort::GetAvailableProviders();
 
@@ -51,8 +54,20 @@ class OrtSessionHandler {
         m_session_options.SetLogSeverityLevel(0);
         m_session_options.SetLogId("ort_session");
 
+        std::cout << "============= EP options =============" << std::endl;
+
+        for (const auto& [entry, value] : ep_options) {
+            std::cout << "" << entry << ": " << value << std::endl;
+        }
+        std::cout << "======================================" << std::endl;
+
+        for (const auto& [entry, value] : config_entries) {
+            std::cout << "Adding " << entry << ": " << value << std::endl;
+            m_session_options.AddConfigEntry(entry.c_str(), value.c_str());
+        }
         m_session =
             Ort::Session(m_env, model_filename.c_str(), m_session_options);
+        std::cout << "Session initiated" << std::endl;
     }
 
     Ort::Session& session() { return m_session.value(); }
